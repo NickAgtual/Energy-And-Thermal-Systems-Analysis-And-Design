@@ -33,8 +33,8 @@ hotel.numRooms = 1362;
 hotel.volumeFlowRate = (hotel.waterPerRoom * hotel.numRooms) / ...
     (24 * 60 * 60);
 
-% Density of water
-water.density = 1; % kg/L
+% Density of water @ bulk average temp
+water.density = .986888643; % kg/L
 
 water.massFlowRate = water.density * hotel.volumeFlowRate;
 
@@ -46,7 +46,7 @@ syms airTout
 % Energy balance on hot and cold fluid
 energyBalance = water.massFlowRate * water.cp * ...
     (water.exitTemp - water.inletTemp) == air.massFlowRate * air.cp * ...
-    (airTout - air.inletTemp);
+    (air.inletTemp - airTout);
 
 air.outletTemp = solve(energyBalance, airTout);
 
@@ -59,4 +59,34 @@ water.bulkAvgTemp = (water.inletTemp + water.exitTemp) / 2; % Deg C
 
 % Bulk average temperature of exhaust gas
 air.bulkAvgTemp = (air.inletTemp + air.outletTemp) / 2; % Deg C
+
+% Temp difference for point 1
+temp.delta1 = air.inletTemp - water.exitTemp;
+
+% Temp difference for point 2
+temp.delta2 = air.outletTemp - water.inletTemp;
+
+% Log mean temperature difference
+temp.lm = (temp.delta2 - temp.delta1) / (log(temp.delta2 / temp.delta1));
+
+%% Design Calculations
+
+% Air and water velocities
+
+% Reynold's number for air and water
+
+% Stanton number & friction factor for air and water
+
+% Heat transfer coeff. for air and water
+
+% Overall surface efficiency & fin efficiency
+
+% Total surface are of HX
+
+%% Design Verification
+
+
+
+
+
 

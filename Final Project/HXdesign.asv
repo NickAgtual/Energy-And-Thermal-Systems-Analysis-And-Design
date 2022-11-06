@@ -1,0 +1,33 @@
+%% Heat Exchanger Design
+clear; clc; close all
+
+%% Input Parameters
+
+% Water inlet temperature
+water.inletTemp = 25; % Deg C
+
+% Water exit temperature
+water.exitTemp = 80; % Deg C
+
+% Gas inlet temp
+gas.inletTemp = 309; % Deg C
+
+% Gas mass flow rate
+gas.massFlowRate = .49; % kg/s
+
+%% Water Mass Flow Rate (SD Marriott Marquis & Marina Hotel)
+hotel.waterPerRoom = 280.84; % L/day
+
+hotel.numRooms = 1362;
+
+hotel.volumeFlow = (hotel.waterPerRoom * hotel.numRooms) * 
+
+%% HX Surface Characteristics (CF-9.05-3/4J (a))
+
+%% Fluid Properties
+
+% Bulk average temperature of water
+water.bulkAvgTemp = (water.inletTemp + water.exitTemp) / 2;
+
+% Bulk average temperature of exhaust gas ???
+

@@ -74,9 +74,9 @@ temp.delta2 = air.outletTemp - water.inletTemp;
 % Log mean temperature difference
 temp.lm = (temp.delta2 - temp.delta1) / (log(temp.delta2 / temp.delta1));
 
-% ----- Specific Heat -----
-
-% Reading excel file with cp data for air
+% Reading excel sheet with cp data for air
+% Col1 = Temperature (K)
+% Col2 = Specific heat (
 excel.cpDataSheet = "Specific Heat of Air";
 air.cpData = xlsread(excel.fileName, excel.cpDataSheet);
 
@@ -84,8 +84,28 @@ air.cpData = xlsread(excel.fileName, excel.cpDataSheet);
 air.cp = interp1(air.cpData(:, 1), air.cpData(:, 2),...
     air.bulkAvgTemp + 273.15);
 
+% Reading excel sheet with water properties
+% Col1 = Temp (C)
+% Col2 = Density (kg/m^3); 
+% Col3 = Dynamic Viscocity (Ns/m^2)
+% Col4 = Kinematic Viscocity (m^2/s)
 % True specific heat of water @ bulk average temp
-water.cp = 1;
+excel.waterPropertiesSheet = "Properties of Water";
+water.propertyData = xlsread(excel.fileName, excel.waterPropertiesSheet);
+
+% Kinematic viscocity of water
+water.kinematicViscocity = interp1(water.propertyData(:, 1), ...
+    water.propertyData(:, 4), water.bulkAvgTemp); % m^2/s
+
+% Dynamic viscocity of water
+water.dynamicViscocity = interp1(water.propertyData(:, 1), ...
+    water.propertyData(:, 3), water.bulkAvgTemp); % Ns/m^2
+
+% Density of water
+water.density = interp1(water.propertyData(:, 1), ...
+    water.propertyData(:, 2), water.bulkAvgTemp) * 10 ^-3; % kg/L
+
+
 
 %% Design Calculations
 

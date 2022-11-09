@@ -63,7 +63,7 @@ air.outletTemp = solve(energyBalance, airTout);
 water.bulkAvgTemp = (water.inletTemp + water.exitTemp) / 2; % Deg C
 
 % Bulk average temperature of exhaust gas
-air.bulkAvgTemp = (air.inletTemp + air.outletTemp) / 2; % Deg C
+air.bulkAvgTemp = double((air.inletTemp + air.outletTemp)) / 2; % Deg C
 
 % Temp difference for point 1
 temp.delta1 = air.inletTemp - water.exitTemp;
@@ -76,15 +76,27 @@ temp.lm = (temp.delta2 - temp.delta1) / (log(temp.delta2 / temp.delta1));
 
 % ----- Specific Heat -----
 
-% Reading excel file with cp data for air
+% Reading excel sheet with cp data for air
+% Col1 = Temperature (K)
+% Col2 = Specific heat (
 excel.cpDataSheet = "Specific Heat of Air";
 air.cpData = xlsread(excel.fileName, excel.cpDataSheet);
 
-% True specific heat of water @ bulk average temp
-water.cp = interp1(air.cpData;
-
 % True specific heat of air @ bulk average temp
-air.cp = 1;
+air.cp = interp1(air.cpData(:, 1), air.cpData(:, 2),...
+    air.bulkAvgTemp + 273.15);
+
+% Reading excel sheet with water properties
+% Col1 = Temp (C)
+% Col2 = Density (kg/m^3); 
+% Col3 = Dynamic Viscocity (Ns/m^2)
+% Col4 = Kinematic Viscocity (m^2/s)
+% True specific heat of water @ bulk average temp
+excel.waterPropertiesSheet = "Properties of Water";
+water.propertyData = xlsread(excel.fileName, excel.waterPropertiesSheet);
+
+% Kinematic viscocity of water
+water.kinematicViscocity = interp1(water.propertyData
 
 %% Design Calculations
 

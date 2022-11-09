@@ -55,37 +55,33 @@ air.outletTemp = solve(energyBalance, airTout);
 
 %% HX Surface Characteristics (CF-9.05-3/4J (a))
 
-% Organizing HX structure
-HX(1).side = 'Air';
-HX(2).side = 'Water';
-
 % ----- Air Side -----
 % Flow-passage hydraulic radius
-HX(1).rh = (5.13 / 4) * 10 ^ -3; % m
+HXair.rh = (5.13 / 4) * 10 ^ -3; % m
 
 % Total gas-side transfer area/total volume
-HX(1).alpha = 354; % m^2/m^3
+HXair.alpha = 354; % m^2/m^3
 
 % Fin area/total area
-HX(1).freeOverfrontal = .917; 
+HXair.freeOverfrontal = .917; 
 
 % Fin-metal thickness
-HX(1).delta = .31 * 10 ^ -3; % m
+HXair.delta = .31 * 10 ^ -3; % m
 
 % Fin material
-HX(1).finMaterial = 'Copper';
+HXair.finMaterial = 'Copper';
 
 % Fin thermal conductivity
-HX(1).finThermalConductivity = 389.5; % W/mK
+HXair.finThermalConductivity = 389.5; % W/mK
 
 % Fin outer diameter
-HX(1).finOD = 37.2 * 10 ^ 03; % m
+HXair.finOD = 37.2 * 10 ^ 03; % m
 
 % Fin inner diameter = tube outer diameter
-HX(1).tubeDiameter = 19.66 * 10 ^ -3; % m
+HXair.tubeDiameter = 19.66 * 10 ^ -3; % m
 
 % Fin height
-HX(1).hFin = (HX(1).finOD / 2) - (HX(1).tubeDiameter / 2); % m
+HXair.hFin = (HXair.finOD / 2) - (HXair.tubeDiameter / 2); % m
 
 % Fin pitch
 % 39.3701 in/meter
@@ -93,22 +89,32 @@ HX(1).finPitch = 9.05 * 39.3701; % Fin / meter
 
 % ----- Water Side -----
 % Outer diameter of tube
-HX(2).OD = 19.66 * 10 ^ -3; % m
+HXwater.OD = 19.66 * 10 ^ -3; % m
 
 % Inner diameter
 % 39.3701 in/meter
-HX(2).ID = (3 / 4) / 39.3701; % m
+HXwater.ID = (3 / 4) / 39.3701; % m
 
 % Transverse tube spacing
-HX(2).S = 39.5 * 10 ^ -3; % m
+HXwater.S = 39.5 * 10 ^ -3; % m
 
 % Longitudinal Spacing
-HX(2)
+HXwater.L = 44.5 * 10 ^ - 3; % m
 
 % Frontal area associated with one tube
+HXwater.Afr = HXwater.L * HXwater.S; % m^2
+
+% Free flow area of one tube
+HXwater.Ac = pi * ((HXwater.ID ^ 2) / 4); % m^2
+
+% Free flow area over frontal area
+HXwater.sigma = HXwater.Ac / HXwater.Afr;
 
 % Flow-passage hydraulic radius
-HX(2).rh = HX(2).OD / 4; % m
+HXwater.rh = HXwater.ID / 4; % m
+
+% Transfer area over total volume
+HXwater.alpha = HXwater.sigma / HXwater.rh;
 
 %% Fluid Properties
 
@@ -187,8 +193,17 @@ water.density = interp1(water.propertyData(:, 1), ...
 %% Design Calculations
 
 % Air and water velocities
+air.w = 1.5; % m/s
+water.w = 6; % m/s
 
-% Reynold's number for air and water
+% ----- Reynold's number for air and water ------
+
+% Mass velocity of air and water
+air.G = air.density * air.w; % kg/sm^2
+water.G = water.density * water.w; % kg/sm^2
+
+% Reynolds number
+air.Re = 4 * ai
 
 % Stanton number & friction factor for air and water
 

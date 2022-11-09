@@ -165,7 +165,7 @@ air.dynamicViscocity = interp1(air.propertyData(:, 1), ...
 
 % Density of water
 air.density = interp1(air.propertyData(:, 1), ...
-    air.propertyData(:, 2), air.bulkAvgTemp) * 10 ^-3; % kg/L
+    air.propertyData(:, 2), air.bulkAvgTemp); % kg/m^3
 
 % ----- Water -----
 
@@ -193,8 +193,17 @@ water.density = interp1(water.propertyData(:, 1), ...
 %% Design Calculations
 
 % Air and water velocities
+air.w = 16; % m/s
+water.w = 1.5; % m/s
 
-% Reynold's number for air and water
+% ----- Reynold's number for air and water ------
+
+% Mass velocity of air and water
+air.G = air.density * air.w; % kg/sm^2
+water.G = water.density * water.w; % kg/sm^2
+
+% Reynolds number for air
+air.Re = (4 * HXair.rh * air.G) / air.dynamicViscocity;
 
 % Stanton number & friction factor for air and water
 

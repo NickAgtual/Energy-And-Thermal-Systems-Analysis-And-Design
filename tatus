@@ -1,0 +1,140 @@
+[1mdiff --git a/Final Project/HXdesign.asv b/Final Project/HXdesign.asv[m
+[1mindex 5675617..0c61f0d 100644[m
+[1m--- a/Final Project/HXdesign.asv[m	
+[1m+++ b/Final Project/HXdesign.asv[m	
+[36m@@ -55,37 +55,33 @@[m [mair.outletTemp = solve(energyBalance, airTout);[m
+ [m
+ %% HX Surface Characteristics (CF-9.05-3/4J (a))[m
+ [m
+[31m-% Organizing HX structure[m
+[31m-HX(1).side = 'Air';[m
+[31m-HX(2).side = 'Water';[m
+[31m-[m
+ % ----- Air Side -----[m
+ % Flow-passage hydraulic radius[m
+[31m-HX(1).rh = (5.13 / 4) * 10 ^ -3; % m[m
+[32m+[m[32mHXair.rh = (5.13 / 4) * 10 ^ -3; % m[m
+ [m
+ % Total gas-side transfer area/total volume[m
+[31m-HX(1).alpha = 354; % m^2/m^3[m
+[32m+[m[32mHXair.alpha = 354; % m^2/m^3[m
+ [m
+ % Fin area/total area[m
+[31m-HX(1).freeOverfrontal = .917; [m
+[32m+[m[32mHXair.freeOverfrontal = .917;[m[41m [m
+ [m
+ % Fin-metal thickness[m
+[31m-HX(1).delta = .31 * 10 ^ -3; % m[m
+[32m+[m[32mHXair.delta = .31 * 10 ^ -3; % m[m
+ [m
+ % Fin material[m
+[31m-HX(1).finMaterial = 'Copper';[m
+[32m+[m[32mHXair.finMaterial = 'Copper';[m
+ [m
+ % Fin thermal conductivity[m
+[31m-HX(1).finThermalConductivity = 389.5; % W/mK[m
+[32m+[m[32mHXair.finThermalConductivity = 389.5; % W/mK[m
+ [m
+ % Fin outer diameter[m
+[31m-HX(1).finOD = 37.2 * 10 ^ 03; % m[m
+[32m+[m[32mHXair.finOD = 37.2 * 10 ^ 03; % m[m
+ [m
+ % Fin inner diameter = tube outer diameter[m
+[31m-HX(1).tubeDiameter = 19.66 * 10 ^ -3; % m[m
+[32m+[m[32mHXair.tubeDiameter = 19.66 * 10 ^ -3; % m[m
+ [m
+ % Fin height[m
+[31m-HX(1).hFin = (HX(1).finOD / 2) - (HX(1).tubeDiameter / 2); % m[m
+[32m+[m[32mHXair.hFin = (HXair.finOD / 2) - (HXair.tubeDiameter / 2); % m[m
+ [m
+ % Fin pitch[m
+ % 39.3701 in/meter[m
+[36m@@ -93,22 +89,32 @@[m [mHX(1).finPitch = 9.05 * 39.3701; % Fin / meter[m
+ [m
+ % ----- Water Side -----[m
+ % Outer diameter of tube[m
+[31m-HX(2).OD = 19.66 * 10 ^ -3; % m[m
+[32m+[m[32mHXwater.OD = 19.66 * 10 ^ -3; % m[m
+ [m
+ % Inner diameter[m
+ % 39.3701 in/meter[m
+[31m-HX(2).ID = (3 / 4) / 39.3701; % m[m
+[32m+[m[32mHXwater.ID = (3 / 4) / 39.3701; % m[m
+ [m
+ % Transverse tube spacing[m
+[31m-HX(2).S = 39.5 * 10 ^ -3; % m[m
+[32m+[m[32mHXwater.S = 39.5 * 10 ^ -3; % m[m
+ [m
+ % Longitudinal Spacing[m
+[31m-HX(2)[m
+[32m+[m[32mHXwater.L = 44.5 * 10 ^ - 3; % m[m
+ [m
+ % Frontal area associated with one tube[m
+[32m+[m[32mHXwater.Afr = HXwater.L * HXwater.S; % m^2[m
+[32m+[m
+[32m+[m[32m% Free flow area of one tube[m
+[32m+[m[32mHXwater.Ac = pi * ((HXwater.ID ^ 2) / 4); % m^2[m
+[32m+[m
+[32m+[m[32m% Free flow area over frontal area[m
+[32m+[m[32mHXwater.sigma = HXwater.Ac / HXwater.Afr;[m
+ [m
+ % Flow-passage hydraulic radius[m
+[31m-HX(2).rh = HX(2).OD / 4; % m[m
+[32m+[m[32mHXwater.rh = HXwater.ID / 4; % m[m
+[32m+[m
+[32m+[m[32m% Transfer area over total volume[m
+[32m+[m[32mHXwater.alpha = HXwater.sigma / HXwater.rh;[m
+ [m
+ %% Fluid Properties[m
+ [m
+[36m@@ -187,8 +193,17 @@[m [mwater.density = interp1(water.propertyData(:, 1), ...[m
+ %% Design Calculations[m
+ [m
+ % Air and water velocities[m
+[32m+[m[32mair.w = 1.5; % m/s[m
+[32m+[m[32mwater.w = 6; % m/s[m
+[32m+[m
+[32m+[m[32m% ----- Reynold's number for air and water ------[m
+[32m+[m
+[32m+[m[32m% Mass velocity of air and water[m
+[32m+[m[32mair.G = air.density * air.w; % kg/sm^2[m
+[32m+[m[32mwater.G = water.density * water.w; % kg/sm^2[m
+ [m
+[31m-% Reynold's number for air and water[m
+[32m+[m[32m% Reynolds number[m
+[32m+[m[32mair.Re = 4 * ai[m
+ [m
+ % Stanton number & friction factor for air and water[m
+ [m
+[1mdiff --git a/Final Project/HXdesign.m b/Final Project/HXdesign.m[m
+[1mindex 4938f55..e4b4de1 100644[m
+[1m--- a/Final Project/HXdesign.m[m	
+[1m+++ b/Final Project/HXdesign.m[m	
+[36m@@ -165,7 +165,7 @@[m [mair.dynamicViscocity = interp1(air.propertyData(:, 1), ...[m
+ [m
+ % Density of water[m
+ air.density = interp1(air.propertyData(:, 1), ...[m
+[31m-    air.propertyData(:, 2), air.bulkAvgTemp) * 10 ^-3; % kg/L[m
+[32m+[m[32m    air.propertyData(:, 2), air.bulkAvgTemp); % kg/m^3[m
+ [m
+ % ----- Water -----[m
+ [m
+[36m@@ -193,8 +193,17 @@[m [mwater.density = interp1(water.propertyData(:, 1), ...[m
+ %% Design Calculations[m
+ [m
+ % Air and water velocities[m
+[32m+[m[32mair.w = 16; % m/s[m
+[32m+[m[32mwater.w = 1.5; % m/s[m
+ [m
+[31m-% Reynold's number for air and water[m
+[32m+[m[32m% ----- Reynold's number for air and water ------[m
+[32m+[m
+[32m+[m[32m% Mass velocity of air and water[m
+[32m+[m[32mair.G = air.density * air.w; % kg/sm^2[m
+[32m+[m[32mwater.G = water.density * water.w; % kg/sm^2[m
+[32m+[m
+[32m+[m[32m% Reynolds number for air[m
+[32m+[m[32mair.Re = (4 * HXair.rh * air.G) / air.dynamicViscocity;[m
+ [m
+ % Stanton number & friction factor for air and water[m
+ [m

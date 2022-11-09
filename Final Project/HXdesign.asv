@@ -1,5 +1,8 @@
 %% Heat Exchanger Design
-clear; clc; close all
+% clear; clc; close all
+
+% Excel file name
+excel.fileName = "ME 555 Final Project Lookup Tables";
 
 %% Input Parameters
 
@@ -15,10 +18,10 @@ air.inletTemp = 309; % Deg C
 % Gas mass flow rate
 air.massFlowRate = .49; % kg/s
 
-% Specific heat of water
+% General specific heat of water for energy balance calcs
 water.cp = 4.179; % kJ/kgK
 
-% Specific heat of air
+% General specific heat of air for energy balance calcs
 air.cp = 1.005; % kJ/kgK
 
 %% Water Mass Flow Rate (SD Marriott Marquis & Marina Hotel)
@@ -36,7 +39,7 @@ hotel.volumeFlowRate = (hotel.waterPerRoom * hotel.numRooms) / ...
 % Density of water @ bulk average temp
 water.density = .986888643; % kg/L
 
-water.massFlowRate = water.density * hotel.volumeFlowRate;
+water.massFlowRate = water.density * hotel.volumeFlowRate / 10;
 
 %% Gas Exit Temperature
 
@@ -54,6 +57,8 @@ air.outletTemp = solve(energyBalance, airTout);
 
 %% Fluid Properties
 
+% ----- Temperature Values -----
+
 % Bulk average temperature of water
 water.bulkAvgTemp = (water.inletTemp + water.exitTemp) / 2; % Deg C
 
@@ -68,6 +73,18 @@ temp.delta2 = air.outletTemp - water.inletTemp;
 
 % Log mean temperature difference
 temp.lm = (temp.delta2 - temp.delta1) / (log(temp.delta2 / temp.delta1));
+
+% ----- Specific Heat -----
+
+% Reading excel file with cp data for air
+excel.cpDataSheet = "Specific Heat of Air";
+air.cpData = xlsread(excel.fileName, excel.cpDataSheet);
+
+% True specific heat of water @ bulk average temp
+water.cp = interp1(air.cpData;
+
+% True specific heat of air @ bulk average temp
+air.cp = 1;
 
 %% Design Calculations
 

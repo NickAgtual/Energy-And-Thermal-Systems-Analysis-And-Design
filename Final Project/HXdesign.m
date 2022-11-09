@@ -188,11 +188,11 @@ water.dynamicViscocity = interp1(water.propertyData(:, 1), ...
 
 % Density of water
 water.density = interp1(water.propertyData(:, 1), ...
-    water.propertyData(:, 2), water.bulkAvgTemp) * 10 ^-3; % kg/L
+    water.propertyData(:, 2), water.bulkAvgTemp); % kg/m^3
 
 %% Design Calculations
 
-% Air and water velocities
+% Air and water velocities 
 air.w = 16; % m/s
 water.w = 1.5; % m/s
 
@@ -204,8 +204,24 @@ water.G = water.density * water.w; % kg/sm^2
 
 % Reynolds number for air
 air.Re = (4 * HXair.rh * air.G) / air.dynamicViscocity;
+water.Re = (4 * HXwater.rh * water.G) / water.dynamicViscocity;
 
-% Stanton number & friction factor for air and water
+% ----- Friction factor of air and water -----
+% Using Karman-Nikiradse Equation
+% Defining symbolic variable for friction factor
+syms f
+
+% Air
+airFrictionFactorEq = (1 / sqrt(f)) == .86 * log(air.Re * sqrt(f)) - .8;
+air.f = double(solve(airFrictionFactorEq, f));
+
+% Water
+waterFrictionFactorEq = (1 / sqrt(f)) == .86 * log(water.Re * sqrt(f)) ...
+    - .8;
+water.f = double(solve(waterFrictionFactorEq, f));
+
+% ----- Stanton number for air and water -----
+
 
 % Heat transfer coeff. for air and water
 

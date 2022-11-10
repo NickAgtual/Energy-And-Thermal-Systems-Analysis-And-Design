@@ -136,59 +136,64 @@ temp.delta2 = air.outletTemp - water.inletTemp;
 temp.lm = (temp.delta2 - temp.delta1) / (log(temp.delta2 / temp.delta1));
 
 % ----- Air -----
-% Reading excel sheet with cp data for air
-% Col1 = Temperature (K)
-% Col2 = Specific heat (
-excel.cpDataSheet = "Specific Heat of Air";
-air.cpData = xlsread(excel.fileName, excel.cpDataSheet);
-
-% True specific heat of air @ bulk average temp
-air.cp = interp1(air.cpData(:, 1), air.cpData(:, 2),...
-    air.bulkAvgTemp + 273.15);
-
 % Reading excel sheet with air properties
-% Col1 = Temp (C)
-% Col2 = Density (kg/m^3); 
-% Col3 = Dynamic Viscocity (Ns/m^2)
-% Col4 = Kinematic Viscocity (m^2/s)
-% True specific heat of water @ bulk average temp
 excel.airPropertiesSheet = "Properties of Air";
 air.propertyData = xlsread(excel.fileName, excel.airPropertiesSheet);
 
+% True specific heat of air @ bulk average temp
+air.cp = interp1(air.propertyData(:, 1), air.propertyData(:, 3),...
+    air.bulkAvgTemp + 273.15);
+
 % Kinematic viscocity of water
 air.kinematicViscocity = interp1(air.propertyData(:, 1), ...
-    air.propertyData(:, 4), air.bulkAvgTemp); % m^2/s
+    air.propertyData(:, 5), air.bulkAvgTemp + 273.15); % m^2/s
 
 % Dynamic viscocity of water
 air.dynamicViscocity = interp1(air.propertyData(:, 1), ...
-    air.propertyData(:, 3), air.bulkAvgTemp); % Ns/m^2
+    air.propertyData(:, 4), air.bulkAvgTemp + 273.15); % Ns/m^2
 
 % Density of water
 air.density = interp1(air.propertyData(:, 1), ...
-    air.propertyData(:, 2), air.bulkAvgTemp); % kg/m^3
+    air.propertyData(:, 2), air.bulkAvgTemp + 273.15); % kg/m^3
+
+% Thermal conductivity of water
+air.k = interp1(air.propertyData(:, 1), ...
+    air.propertyData(:, 6), air.bulkAvgTemp + 273.15); % m^2/s
+
+% Density of water
+air.Pr = interp1(air.propertyData(:, 1), ...
+    air.propertyData(:, 8), air.bulkAvgTemp + 273.15);
+
+% Prandtl number for air
 
 % ----- Water -----
-
 % Reading excel sheet with water properties
-% Col1 = Temp (C)
-% Col2 = Density (kg/m^3); 
-% Col3 = Dynamic Viscocity (Ns/m^2)
-% Col4 = Kinematic Viscocity (m^2/s)
-% True specific heat of water @ bulk average temp
 excel.waterPropertiesSheet = "Properties of Water";
 water.propertyData = xlsread(excel.fileName, excel.waterPropertiesSheet);
 
-% Kinematic viscocity of water
-water.kinematicViscocity = interp1(water.propertyData(:, 1), ...
-    water.propertyData(:, 4), water.bulkAvgTemp); % m^2/s
-
 % Dynamic viscocity of water
 water.dynamicViscocity = interp1(water.propertyData(:, 1), ...
-    water.propertyData(:, 3), water.bulkAvgTemp); % Ns/m^2
+    water.propertyData(:, 3), water.bulkAvgTemp + 273.15); % Ns/m^2
+
+% Specific heat of water
+water.cp = interp1(water.propertyData(:, 1), ...
+    water.propertyData(:, 2), water.bulkAvgTemp + 273.15); % Ns/m^2
+
+% Thermal conductivity of water
+water.k = interp1(water.propertyData(:, 1), ...
+    water.propertyData(:, 3), water.bulkAvgTemp + 273.15); % Ns/m^2
+
+% Prandtl number of water
+water.Pr = interp1(water.propertyData(:, 1), ...
+    water.propertyData(:, 3), water.bulkAvgTemp + 273.15); % Ns/m^2
+
+% Reading excel sheet with water densitiies
+excel.waterPropertiesSheet = "Water Density";
+water.densityData = xlsread(excel.fileName, excel.waterPropertiesSheet);
 
 % Density of water
-water.density = interp1(water.propertyData(:, 1), ...
-    water.propertyData(:, 2), water.bulkAvgTemp); % kg/m^3
+water.density = interp1(water.densityData(:, 1), ...
+    water.densityData(:, 2), water.bulkAvgTemp); % kg/m^3
 
 %% Design Calculations
 
@@ -197,7 +202,6 @@ air.w = 16; % m/s
 water.w = 1.5; % m/s
 
 % ----- Reynold's number for air and water ------
-
 % Mass velocity of air and water
 air.G = air.density * air.w; % kg/sm^2
 water.G = water.density * water.w; % kg/sm^2
@@ -207,20 +211,17 @@ air.Re = (4 * HXair.rh * air.G) / air.dynamicViscocity;
 water.Re = (4 * HXwater.rh * water.G) / water.dynamicViscocity;
 
 % ----- Friction factor of air and water -----
-% Using Karman-Nikiradse Equation
-% Defining symbolic variable for friction factor
-syms f
+% Friction factor of air (HX Plot)
+air.f = .028;
 
-% Air
-airFrictionFactorEq = (1 / sqrt(f)) == .86 * log(air.Re * sqrt(f)) - .8;
-air.f = double(solve(airFrictionFactorEq, f));
-
-% Water
-waterFrictionFactorEq = (1 / sqrt(f)) == .86 * log(water.Re * sqrt(f)) ...
-    - .8;
-water.f = double(solve(waterFrictionFactorEq, f));
+% Friction factor of water (Karman-Nikuradse Equation)
+water.f = .079 * (water.Re ^ -.25);
 
 % ----- Stanton number for air and water -----
+% Stanton number of air (HX Plot)
+air.St = .0068 / air.Pr;
+
+% Stanton number of water
 
 
 % Heat transfer coeff. for air and water

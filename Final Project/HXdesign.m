@@ -63,7 +63,7 @@ HXair.rh = (5.13 / 4) * 10 ^ -3; % m
 HXair.alpha = 354; % m^2/m^3
 
 % Fin area/total area
-HXair.freeOverfrontal = .917; 
+HXair.sigma = .917; 
 
 % Fin-metal thickness
 HXair.delta = .31 * 10 ^ -3; % m
@@ -75,7 +75,7 @@ HXair.finMaterial = 'Copper';
 HXair.finThermalConductivity = 389.5; % W/mK
 
 % Fin outer diameter
-HXair.finOD = 37.2 * 10 ^ 03; % m
+HXair.finOD = 37.2 * 10 ^ -3; % m
 
 % Fin inner diameter = tube outer diameter
 HXair.tubeDiameter = 19.66 * 10 ^ -3; % m
@@ -146,11 +146,11 @@ air.cp = interp1(air.propertyData(:, 1), air.propertyData(:, 3),...
 
 % Kinematic viscocity of water
 air.kinematicViscocity = interp1(air.propertyData(:, 1), ...
-    air.propertyData(:, 5), air.bulkAvgTemp + 273.15); % m^2/s
+    air.propertyData(:, 5), air.bulkAvgTemp + 273.15) * 10 ^ -6; % m^2/s
 
 % Dynamic viscocity of water
 air.dynamicViscocity = interp1(air.propertyData(:, 1), ...
-    air.propertyData(:, 4), air.bulkAvgTemp + 273.15); % Ns/m^2
+    air.propertyData(:, 4), air.bulkAvgTemp + 273.15) * 10 ^ -7; % Ns/m^2
 
 % Density of water
 air.density = interp1(air.propertyData(:, 1), ...
@@ -173,19 +173,20 @@ water.propertyData = xlsread(excel.fileName, excel.waterPropertiesSheet);
 
 % Dynamic viscocity of water
 water.dynamicViscocity = interp1(water.propertyData(:, 1), ...
-    water.propertyData(:, 3), water.bulkAvgTemp + 273.15); % Ns/m^2
+    water.propertyData(:, 3), water.bulkAvgTemp + 273.15) * ...
+    10 ^ -6; % Ns/m^2
 
 % Specific heat of water
 water.cp = interp1(water.propertyData(:, 1), ...
-    water.propertyData(:, 2), water.bulkAvgTemp + 273.15); % Ns/m^2
+    water.propertyData(:, 2), water.bulkAvgTemp + 273.15); % kJ/kgK
 
 % Thermal conductivity of water
 water.k = interp1(water.propertyData(:, 1), ...
-    water.propertyData(:, 3), water.bulkAvgTemp + 273.15); % Ns/m^2
+    water.propertyData(:, 4), water.bulkAvgTemp + 273.15) * 10 ^ -3; % W/mK
 
 % Prandtl number of water
 water.Pr = interp1(water.propertyData(:, 1), ...
-    water.propertyData(:, 3), water.bulkAvgTemp + 273.15); % Ns/m^2
+    water.propertyData(:, 5), water.bulkAvgTemp + 273.15);
 
 % Reading excel sheet with water densitiies
 excel.waterPropertiesSheet = "Water Density";
@@ -199,7 +200,7 @@ water.density = interp1(water.densityData(:, 1), ...
 
 % Air and water velocities 
 air.w = 16; % m/s
-water.w = 1.5; % m/s
+water.w = .5; % m/s
 
 % ----- Reynold's number for air and water ------
 % Mass velocity of air and water
@@ -217,18 +218,68 @@ air.f = .028;
 % Friction factor of water (Karman-Nikuradse Equation)
 water.f = .079 * (water.Re ^ -.25);
 
-% ----- Stanton number for air and water -----
+% ----- Stanton/Nusselt number for air and water -----
 % Stanton number of air (HX Plot)
 air.St = .0068 / air.Pr;
 
-% Stanton number of water
+% Nusselt number of water (Nusselt # for turbulent flow plot) Figure 8
+water.Nu = .023 * (water.Re ^ .8) * (water.Pr ^ .4);
 
-
-% Heat transfer coeff. for air and water
+% ----- Heat transfer coeff. for air and water -----
+air.h = air.St * air.G * air.cp * 1000; % W/m^2K
+water.h = (water.Nu * water.k) / (4 * HXwater.rh); % W/m^2K
 
 % Overall surface efficiency & fin efficiency
+HXair.m = sqrt((2 * air.h) / (HXair.finThermalConductivity * HXair.delta));
+HXair.mr = HXair.m * HXair.hFin; 
+Hxair.ratio = HXair.finOD / HXair.tubeDiameter;
 
-% Total surface are of HX
+% Fin efficiency (eta n) (From figure 6)
+efficiency.fin = .95;
+
+% Overall surface efficiency (eta o)
+efficiency.overall = 1 - (HXair.freeOverfrontal * (1 - efficiency.fin));
+
+% Overall heat transfer coefficient
+HX.U = 1 / ((HXair.alpha / (HXwater.alpha * water.h)) + ...
+    (1 / (efficiency.overall * air.h)));
+
+% ----- HX Geometry ----- 
+% Heat exchanger heat transfer
+HX.q = water.massFlowRate * water.cp * ...
+    (water.exitTemp - water.inletTemp); % kJ
+
+% Heat exchanger area
+HX.A = double((HX.q * 1000) / (HX.U * temp.lm)); % m^2
+
+% Matrix frontal area for gas
+HX.Afg = air.massFlowRate / (HXair.sigma * air.G);
+
+% Tube matrix length
+HX.LtmPreliminary = HX.A / (HX.Afg * HXair.alpha);
+
+% Number of tube passes
+HX.NtbPreliminary = HX.LtmPreliminary / HXwater.L;
+% As a conservative design, 15 tube passes are used
+HX.Ntb = round(HX.NtbPreliminary) + 5;
+
+% Updated tube matrix length
+HX.Ltm = HX.Ntb * HXwater.L;
+
+% Mass flow rate of water per one tube passage
+HX.mWaterPtube = HXwater.Ac * water.G;
+
+% Number of tube passages required
+HX.NtpPreliminary = water.massFlowRate / HX.mWaterPtube;
+
+% Number of tube passages
+HX.Ntp = ceil(HX.NtbPreliminary);
+
+% HX Height
+HX.height = HX.Ntp * HXwater.S; % m
+
+% HX Width
+HX.width = HX.Afg / HX.height; % m
 
 %% Design Verification
 

@@ -1,5 +1,5 @@
 %% Heat Exchanger Design
-% clear; clc; close all
+clear; clc; close all
 
 % Excel file name
 excel.fileName = "ME 555 Final Project Lookup Tables";
@@ -39,7 +39,11 @@ hotel.volumeFlowRate = (hotel.waterPerRoom * hotel.numRooms) / ...
 % Density of water @ bulk average temp
 water.density = .986888643; % kg/L
 
-water.massFlowRate = water.density * hotel.volumeFlowRate / 10;
+% Number of C65 Microturbines
+hotel.numMicroturbines = 10;
+
+water.massFlowRate = water.density * hotel.volumeFlowRate / ...
+    hotel.numMicroturbines;
 
 %% Gas Exit Temperature
 
@@ -238,7 +242,7 @@ Hxair.ratio = HXair.finOD / HXair.tubeDiameter;
 efficiency.fin = .95;
 
 % Overall surface efficiency (eta o)
-efficiency.overall = 1 - (HXair.freeOverfrontal * (1 - efficiency.fin));
+efficiency.overall = 1 - (HXair.sigma * (1 - efficiency.fin));
 
 % Overall heat transfer coefficient
 HX.U = 1 / ((HXair.alpha / (HXwater.alpha * water.h)) + ...
@@ -260,6 +264,7 @@ HX.LtmPreliminary = HX.A / (HX.Afg * HXair.alpha);
 
 % Number of tube passes
 HX.NtbPreliminary = HX.LtmPreliminary / HXwater.L;
+
 % As a conservative design, 15 tube passes are used
 HX.Ntb = round(HX.NtbPreliminary) + 5;
 
@@ -281,8 +286,31 @@ HX.height = HX.Ntp * HXwater.S; % m
 % HX Width
 HX.width = HX.Afg / HX.height; % m
 
-%% Design Verification
+% HX Total volume
+HX.V = HX.height * HX.width;
 
+% Water frontal area
+HX.Afro = (HX.Ltm / HX.Ntp) * HX.height;
+
+%% Design Verification
+% Mass velocity of air
+verificationAir.G = air.massFlowRate / (HX.Afg * HXair.sigma);
+
+% Reynolds number of air
+verificationAir.Re = (4 * HXair.rh * verificationAir.G) /...
+    air.dynamicViscocity;
+
+% Mass velocity of water
+verificationWater.G = water.massFlowRate / (HX.Afro * HXwater.sigma);
+
+%% Pressure Drop
+air.specificVol2 = (air.outletTemp / air.inletTemp) * (1 / air.density);
+air.meanSpecificVol = (air.specificVol2 + (1 / air.density)) / 2;
+air.meanTemp = (air.meanSpecificVol * air.inletTemp) / (1 / air.density);
+
+pressureDrop = ((air.G ^ 2) * (1 / air.density) / 2) * ...
+    ((1 + HXair.sigma ^ 2) * ((air.specificVol2 / (1 / air.density)) -1)...
+    + (air.f * (HX.Ltm / HXair.rh) * (air.meanTemp / air.inletTemp))); % Pa
 
 
 

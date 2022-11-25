@@ -266,10 +266,10 @@ HX.LtmPreliminary = HX.A / (HX.Afg * HXair.alpha);
 HX.NtbPreliminary = HX.LtmPreliminary / HXwater.L;
 
 % As a conservative design, 15 tube passes are used
-HX.Ntb = round(HX.NtbPreliminary) + 5;
+HX.numTubePasses = round(HX.NtbPreliminary) + 5;
 
 % Updated tube matrix length
-HX.Ltm = HX.Ntb * HXwater.L;
+HX.Ltm = HX.numTubePasses * HXwater.L;
 
 % Mass flow rate of water per one tube passage
 HX.mWaterPtube = HXwater.Ac * water.G;
@@ -278,10 +278,10 @@ HX.mWaterPtube = HXwater.Ac * water.G;
 HX.NtpPreliminary = water.massFlowRate / HX.mWaterPtube;
 
 % Number of tube passages
-HX.Ntp = ceil(HX.NtbPreliminary);
+HX.numTubePassages = ceil(HX.NtbPreliminary);
 
 % HX Height
-HX.height = HX.Ntp * HXwater.S; % m
+HX.height = HX.numTubePassages * HXwater.S; % m
 
 % HX Width
 HX.width = HX.Afg / HX.height; % m
@@ -290,7 +290,7 @@ HX.width = HX.Afg / HX.height; % m
 HX.V = HX.height * HX.width;
 
 % Water frontal area
-HX.Afro = (HX.Ltm / HX.Ntp) * HX.height;
+HX.Afro = (HX.Ltm / HX.numTubePassages) * HX.height;
 
 %% Design Verification
 % Mass velocity of air

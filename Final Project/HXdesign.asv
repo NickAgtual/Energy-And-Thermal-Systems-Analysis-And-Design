@@ -60,6 +60,8 @@ air.outletTemp = solve(energyBalance, airTout);
 %% HX Surface Characteristics 
 %[(CF-9.05-3/4J (a)) (CF-7.34) (CF-8.8-1.0J (b))]
 
+HX.types = {'CF-9.05-3/4J (a)', 'CF-7.34', 'CF-8.8-1.0J (b)'};
+
 % ----- Air Side -----
 % Flow-passage hydraulic radius
 HXair.rh = [(5.13 / 4) (4.75 / 4) (13.21 / 4)] * 10 ^ -3; % m
@@ -293,17 +295,6 @@ HX.V = HX.height .* HX.width;
 % Water frontal area
 HX.Afro = (HX.Ltm ./ HX.numTubePasses) .* HX.height;
 
-%% Design Verification
-% Mass velocity of air
-verificationAir.G = air.massFlowRate ./ (HX.Afg .* HXair.sigma);
-
-% Reynolds number of air
-verificationAir.Re = (4 * HXair.rh .* verificationAir.G) ./...
-    air.dynamicViscocity;
-
-% Mass velocity of water
-verificationWater.G = water.massFlowRate ./ (HX.Afro .* HXwater.sigma);
-
 %% Pressure Drop
 air.specificVol2 = (air.outletTemp / air.inletTemp) * (1 / air.density);
 air.meanSpecificVol = (air.specificVol2 + (1 / air.density)) / 2;
@@ -316,58 +307,119 @@ pressureDrop = ((air.G .^ 2) * (1 / air.density) / 2) * ...
 
 %% Design Verification
 
-%Gas Side Frontal Area
-Afr.gas=HX.height.*HX.width;
+% Mass flow rate of water
+verificationWater.massFlowRate = HX.q / (water.cp * (water.exitTemp - ...
+    water.inletTemp));
 
-%Water Side Frontal Area
-Afr.water=(HX.Ltm./HX.numTubePasses).*HX.height
+% ----- Mass Velocity ------
+% Mass velocity of air
+verificationAir.G = air.massFlowRate ./ (HX.Afg .* HXair.sigma);
 
-%Total HX Volume
-HX.Vol.tot= HX.height.*HX.width.*HX.Ltm
+% Mass velocity of water
+verificationWater.G = verificationWater.massFlowRate ./ ...
+    (HX.Afro .* HXwater.sigma);
 
-%Mass Velocity
-%for air
-G.air= air.massFlowRate./(Afr.gas.*HXair.sigma)
-%for water
-mdot.water=HX.q./(water.cp*(water.exitTemp-water.inletTemp))
-G.water=mdot.water./(Afr.water.*HXwater.sigma)
+% ----- Reynolds Number -----
+% Reynolds number of air
+verificationAir.Re = (4 * HXair.rh .* verificationAir.G) ./...
+    air.dynamicViscocity;
 
-%Reynolds Number 
+% Reynolds number of water
+verificationWater.Re = (4 * HXwater.rh .* verificationWater.G) ./ ...
+    water.dynamicViscocity;
 
-Re.air= (4*HXair.rh.*G.air)./air.dynamicViscocity
-Re.water=(4*HXwater.rh.*G.water)./water.dynamicViscocity
+% ----- Computation of St, f, and h -----
+% Stanton number * Prantll number ^ 2/3 (Figure 2)
+verificationAir.StPr23 = [.0092 .0092 .0092]; 
 
-%Heat transfer for air
-StPr.air=0.0068 %stpr2/3
-St.air=StPr.air/(air.Pr^(2/3))
-f.air=air.f
-h.air=St.air * G.air * air.cp * 10^3 %Wpm2K
+% Stanton number for air
+verificationAir.St = verificationAir.StPr23 / (air.Pr ^ (2/3));
 
-%heat transfer water
-Nu.water=0.023*(Re.water.^.8).*(water.Pr.^.4)
-f.water=0.079*(Re.water.^(-.25))
-h.water=Nu.water.*water.k./(.*HXwater.rh)
+% Heat transfer coefficient for air
+verificationAir.h = verificationAir.St .* verificationAir.G .* ...
+    air.cp * 10^3; %W/m^2K
 
-%overall heat transfer coeff
-U.overall=HX.U
+% Nusselt number for water
+verificationWater.Nu = .023 * (verificationWater.Re .^ (.8)) .* ...
+    (water.Pr ^ (.4));
 
-%Heat capacity rates for air and water
-C.air=air.massFlowRate*air.cp
-C.water=mdot.water*water.cp
+% Friction factor for water
+verificationWater.f = .079 * (verificationWater.Re .^ (-.25));
 
-%NTU
-NTU=U.overall*HXair.alpha*HX.Vol.tot/(C.air*10^3)
-%Cmin over Cmax
-Cminovermax=C.air/C.water
-%from chart
-effectiveness=.96 %percent
+% Heat transfer coefficient for water
+verificationWater.h = (verificationWater.Nu * water.k) ./ (4 * ...
+    HXwater.rh);
+
+% ----- Determination of eta and U -----
+verificationAir.m = sqrt((2 * verificationAir.h) / ...
+    (HXair.finThermalConductivity * HXair.delta));
+verificationAir.mr = verificationAir.m * HXair.hFin;
+verificationAir.ratio = HXair.finOD ./ HXair.tubeDiameter;
+
+% Heat transfer effectiveness of air (Figure 6)
+verificationAir.eta = [.93 .945 .925];
+
+% Heat transfer effectiveness of water 
+verificationWater.eta = 1 - (HXair.sigma .* (1 - verificationAir.eta));
+
+% Overall HT coefficient
+verification.U = 1 ./ ((HXair.alpha ./ (HXwater.alpha .* ...
+    verificationWater.h)) + (1 ./ (verificationWater.eta .* ...
+    verificationAir.h)));
+
+% ----- Determination of NTU, epsilon, and outletTemp -----
+% Heat capacity rate of water
+verificationWater.C = verificationWater.massFlowRate * water.cp; % kW/K
+
+% Heat capacity rate of air
+verificationAir.C = air.massFlowRate * air.cp; % kW/K
+
+% Number of transfer units
+verification.NTU = (verification.U .* HXair.alpha .* HX.V) / ...
+    (min(verificationAir.C, verificationWater.C) * 10 ^ 3);
+
+% Ratio of heat capacity rates
+verification.CRatio = min(verificationAir.C, verificationWater.C) ./ ...
+    max(verificationAir.C, verificationWater.C);
+
+% Effectiveness of HX (Figure 9)
+verification.epsilon = [98 99 87];
 
 %gas temp out
-T.air.out=air.inletTemp-(effectiveness*(air.inletTemp-water.inletTemp))
+verificationAir.outletTemp = (verification.epsilon * 10 ^ -2 .* ...
+    (air.inletTemp - water.inletTemp) - air.inletTemp) * -1;
 
 %water temp out
-T.water.out=Cminovermax*(air.inletTemp-T.air.out)+water.inletTemp
+verificationWater.outletTemp = 
 
+%% Plots
+
+% Pressure drops across different HX
+% Creating new figure
+figure(1)
+
+% Creating bar graph
+bar(double(pressureDrop))
+
+% Adding grid
+hold on
+grid on
+grid minor
+
+% Adding bar labels
+set(gca, 'xticklabel', HX.types, 'TickLabelInterpreter', 'Latex')
+
+% Adding values at tip of bar
+text(1:length(pressureDrop), pressureDrop, ...
+    num2str(double(pressureDrop')), 'vert', 'bottom', 'horiz', 'center',...
+    'Interpreter', 'Latex');
+
+% Plot descriptors
+xlabel('\emph {Heat Exchanger Type}','fontsize',14,'Interpreter',...
+    'latex');
+ylabel('\emph {Pressure Drop (Pa)}','fontsize',14,'Interpreter','latex');
+title('\emph {Pressure Drop Across Different HX}','fontsize',16,...
+    'Interpreter', 'latex')
 
 
 

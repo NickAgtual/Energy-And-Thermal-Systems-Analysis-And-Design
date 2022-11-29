@@ -7,7 +7,7 @@ excel.fileName = "ME 555 Final Project Lookup Tables";
 %% Input Parameters
 
 % Water inlet temperature
-water.inletTemp = 25; % Deg C
+water.inletTemp = 30; % Deg C
 
 % Water exit temperature
 water.exitTemp = 80; % Deg C
@@ -40,7 +40,7 @@ hotel.volumeFlowRate = (hotel.waterPerRoom * hotel.numRooms) / ...
 water.density = .986888643; % kg/L
 
 % Number of C65 Microturbines
-hotel.numMicroturbines = 10;
+hotel.numMicroturbines = 7;
 
 water.massFlowRate = water.density * hotel.volumeFlowRate / ...
     hotel.numMicroturbines;
@@ -67,7 +67,7 @@ HXair.rh = (5.13 / 4) * 10 ^ -3; % m
 HXair.alpha = 354; % m^2/m^3
 
 % Fin area/total area
-HXair.sigma = .917; 
+HXair.sigma = .455; 
 
 % Fin-metal thickness
 HXair.delta = .31 * 10 ^ -3; % m
@@ -262,11 +262,11 @@ HX.Afg = air.massFlowRate / (HXair.sigma * air.G);
 % Tube matrix length
 HX.LtmPreliminary = HX.A / (HX.Afg * HXair.alpha);
 
-% Number of tube passes
+% Number of tube passes (TURNS)
 HX.NtbPreliminary = HX.LtmPreliminary / HXwater.L;
 
 % As a conservative design, 15 tube passes are used
-HX.numTubePasses = round(HX.NtbPreliminary) + 5;
+HX.numTubePasses = round(HX.NtbPreliminary) + 1;
 
 % Updated tube matrix length
 HX.Ltm = HX.numTubePasses * HXwater.L;
@@ -277,8 +277,8 @@ HX.mWaterPtube = HXwater.Ac * water.G;
 % Number of tube passages required
 HX.NtpPreliminary = water.massFlowRate / HX.mWaterPtube;
 
-% Number of tube passages
-HX.numTubePassages = ceil(HX.NtbPreliminary);
+% Number of tube passages (VERTICAL)
+HX.numTubePassages = ceil(HX.NtpPreliminary);
 
 % HX Height
 HX.height = HX.numTubePassages * HXwater.S; % m
@@ -290,7 +290,7 @@ HX.width = HX.Afg / HX.height; % m
 HX.V = HX.height * HX.width;
 
 % Water frontal area
-HX.Afro = (HX.Ltm / HX.numTubePassages) * HX.height;
+HX.Afro = (HX.Ltm / HX.numTubePasses) * HX.height;
 
 %% Design Verification
 % Mass velocity of air
@@ -311,6 +311,62 @@ air.meanTemp = (air.meanSpecificVol * air.inletTemp) / (1 / air.density);
 pressureDrop = ((air.G ^ 2) * (1 / air.density) / 2) * ...
     ((1 + HXair.sigma ^ 2) * ((air.specificVol2 / (1 / air.density)) -1)...
     + (air.f * (HX.Ltm / HXair.rh) * (air.meanTemp / air.inletTemp))); % Pa
+
+
+%% Design Verification
+
+%Gas Side Frontal Area
+Afr.gas=HX.height*HX.width;
+
+%Water Side Frontal Area
+Afr.water=(HX.Ltm/HX.numTubePasses)*HX.height
+
+%Total HX Volume
+HX.Vol.tot= HX.height*HX.width*HX.Ltm
+
+%Mass Velocity
+%for air
+G.air= air.massFlowRate/(Afr.gas*HXair.sigma)
+%for water
+mdot.water=HX.q/(water.cp*(water.exitTemp-water.inletTemp))
+G.water=mdot.water/(Afr.water*HXwater.sigma)
+
+%Reynolds Number 
+
+Re.air= (4*HXair.rh*G.air)/air.dynamicViscocity
+Re.water=(4*HXwater.rh*G.water)/water.dynamicViscocity
+
+%Heat transfer for air
+StPr.air=0.0068 %stpr2/3
+St.air=StPr.air/(air.Pr^(2/3))
+f.air=air.f
+h.air=St.air * G.air * air.cp * 10^3 %Wpm2K
+
+%heat transfer water
+Nu.water=0.023*(Re.water^.8)*(water.Pr^.4)
+f.water=0.079*(Re.water^(-.25))
+h.water=Nu.water*water.k/(4*HXwater.rh)
+
+%overall heat transfer coeff
+U.overall=HX.U
+
+%Heat capacity rates for air and water
+C.air=air.massFlowRate*air.cp
+C.water=mdot.water*water.cp
+
+%NTU
+NTU=U.overall*HXair.alpha*HX.Vol.tot/(C.air*10^3)
+%Cmin over Cmax
+Cminovermax=C.air/C.water
+%from chart
+effectiveness=.96 %percent
+
+%gas temp out
+T.air.out=air.inletTemp-(effectiveness*(air.inletTemp-water.inletTemp))
+
+%water temp out
+T.water.out=Cminovermax*(air.inletTemp-T.air.out)+water.inletTemp
+
 
 
 

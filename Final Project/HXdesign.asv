@@ -346,7 +346,7 @@ h.air=St.air * G.air * air.cp * 10^3 %Wpm2K
 %heat transfer water
 Nu.water=0.023*(Re.water.^.8).*(water.Pr.^.4)
 f.water=0.079*(Re.water.^(-.25))
-h.water=Nu.water.*water.k./(4.*HXwater.rh)
+h.water=Nu.water.*water.k./(.*HXwater.rh)
 
 %overall heat transfer coeff
 U.overall=HX.U
@@ -356,7 +356,7 @@ C.air=air.massFlowRate*air.cp
 C.water=mdot.water*water.cp
 
 %NTU
-NTU=U.overall.*HXair.alpha.*HX.Vol.tot./(C.air*10^3)
+NTU=U.overall*HXair.alpha*HX.Vol.tot/(C.air*10^3)
 %Cmin over Cmax
 Cminovermax=C.air/C.water
 %from chart
@@ -368,9 +368,7 @@ T.air.out=air.inletTemp-(effectiveness*(air.inletTemp-water.inletTemp))
 %water temp out
 T.water.out=Cminovermax*(air.inletTemp-T.air.out)+water.inletTemp
 
-%% Plots
 
-% Pressure drops across different HX
 
 
 

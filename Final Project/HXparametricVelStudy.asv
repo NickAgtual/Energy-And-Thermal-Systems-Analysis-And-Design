@@ -206,7 +206,7 @@ water.density = interp1(water.densityData(:, 1), ...
 
 % Air and water velocities 
 air.w = 16; % m/s
-water.w = linspace(.1, 3.5, 250); % m/s
+water.w = lin; % m/s
 
 % ----- Reynold's number for air and water ------
 % Mass velocity of air and water
@@ -407,18 +407,6 @@ for ii = 1:length(HX.types)
     plot(water.w, pressureDrop(:, ii)', 'DisplayName', HX.types{ii});
     hold on
 end
-
-% Adding grid
-grid on
-grid minor
-
-% Plot descriptors
-xlabel('\emph {Water Velocity ($\frac{m}{s}$)}','fontsize',14,...
-    'Interpreter', 'latex');
-ylabel('\emph {Pressure Drop (Pa)}','fontsize',14,'Interpreter','latex');
-title('\emph {Pressure Drop Across Different HX for Varying Velocities}',...
-    'fontsize',16, 'Interpreter', 'latex')
-legend('location', 'best', 'Interpreter', 'latex')
 
 
 

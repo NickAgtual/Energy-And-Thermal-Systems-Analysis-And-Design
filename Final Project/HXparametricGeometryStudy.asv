@@ -263,7 +263,7 @@ HX.A = double((HX.q * 1000) ./ (HX.U * temp.lm)); % m^2
 HX.Afg = air.massFlowRate ./ (HXair.sigma .* air.G);
 
 % Tube matrix length
-HX.LtmPreliminary = (.1:.03:1) + (HX.A ./ (HX.Afg .* HXair.alpha));
+HX.LtmPreliminary = (.1:.1:1) + (HX.A ./ (HX.Afg .* HXair.alpha));
 
 % Number of tube passes (TURNS)
 HX.NtbPreliminary = HX.LtmPreliminary ./ HXwater.L;
@@ -301,9 +301,8 @@ air.meanSpecificVol = (air.specificVol2 + (1 / air.density)) / 2;
 air.meanTemp = (air.meanSpecificVol * air.inletTemp) / (1 / air.density);
 
 pressureDrop = ((air.G .^ 2) * (1 / air.density) / 2) * ...
-    ((1 + HXair.sigma .^ 2) * ((air.specificVol2 / (1 / ...
-    air.density)) -1) + (air.f .* (HX.Ltm ./ HXair.rh) * ...
-    (air.meanTemp / air.inletTemp))); % Pa
+    ((1 + HXair.sigma .^ 2) * ((air.specificVol2 / (1 / air.density)) -1)...
+    + (air.f .* (HX.Ltm ./ HXair.rh) * (air.meanTemp / air.inletTemp))); % Pa
 
 
 %% Design Verification
@@ -358,7 +357,7 @@ verificationAir.mr = verificationAir.m * HXair.hFin;
 verificationAir.ratio = HXair.finOD ./ HXair.tubeDiameter;
 
 % Heat transfer effectiveness of air (Figure 6)
-verificationAir.eta = ones(1, length(HX.Ltm)) * .93;
+verificationAir.eta = ones(1, 10) * .93;
 
 % Heat transfer effectiveness of water 
 verificationWater.eta = 1 - (HXair.sigma .* (1 - verificationAir.eta));
@@ -395,33 +394,11 @@ verificationWater.outletTemp = (verificationAir.C / ...
     verificationWater.C) * (air.inletTemp - verificationAir.outletTemp) ...
     + water.inletTemp;
 
-verification.epsilon = (1 - exp(-verification.NTU * (1 + ...
-    verification.CRatio))) ./ (1 + verification.CRatio);
+verification.L = (verification.NTU .^ .22) * exp(-verification.CRatio ...
+    * (verification.NTU .^ .78))
+    
 
 %% Plots
 % Creating new figure
-figure(1)
-
-% Plotting pressure drop vs. length
-yyaxis left
-plot(HX.Ltm, pressureDrop, 'DisplayName', 'Pressure Drop')
-ylabel('\emph {Pressure Drop (Pa)}','fontsize',14,'Interpreter', 'latex');
-
-% effectiveness vs. length
-yyaxis right
-plot(HX.Ltm, verification.epsilon, 'DisplayName', 'Effectiveness')
-ylabel('\emph {Effectiveness ($\epsilon$)}','fontsize',14, ...
-    'Interpreter','latex');
-
-% Adding grid
-hold on
-grid on
-grid minor
-
-% Plot descriptors
-xlabel('\emph {HX Length (m)}','fontsize',14,...
-    'Interpreter', 'latex');
-title('\emph {Effect of Heat Exchanger Geometry}',...
-    'fontsize',16, 'Interpreter', 'latex')
-legend('location', 'best', 'Interpreter', 'latex')
+plot(HX.Ltm, pressureDrop)
 

@@ -290,7 +290,7 @@ HX.height = HX.numTubePassages .* HXwater.S; % m
 HX.width = HX.Afg ./ HX.height; % m
 
 % HX Total volume
-HX.V = HX.height .* HX.width;
+HX.V = HX.height .* HX.width * HX.Ltm;
 
 % Water frontal area
 HX.Afro = (HX.Ltm ./ HX.numTubePasses) .* HX.height;

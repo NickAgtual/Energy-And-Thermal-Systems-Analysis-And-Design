@@ -269,7 +269,7 @@ HX.LtmPreliminary = HX.A ./ (HX.Afg .* HXair.alpha);
 % Number of tube passes (TURNS)
 HX.NtbPreliminary = HX.LtmPreliminary ./ HXwater.L;
 
-% As a conservative design, 15 tube passes are used
+% Number of tube passes rounded up 
 HX.numTubePasses = round(HX.NtbPreliminary) + 1;
 
 % Updated tube matrix length

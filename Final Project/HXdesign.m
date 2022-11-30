@@ -244,7 +244,7 @@ HXair.ratio = HXair.finOD ./ HXair.tubeDiameter;
 % Fin efficiency (eta n) (From figure 6)
 efficiency.fin = [.95 .96 .92];
 
-% Overall surface efficiency (eta o)
+% Overall surface efficiency for fin (eta o)
 efficiency.overall = 1 - (HXair.sigma .* (1 - efficiency.fin));
 
 % Overall heat transfer coefficient

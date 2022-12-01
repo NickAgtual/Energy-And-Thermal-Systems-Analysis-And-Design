@@ -242,7 +242,7 @@ HXair.mr = HXair.m .* HXair.hFin;
 HXair.ratio = HXair.finOD ./ HXair.tubeDiameter;
 
 % Fin efficiency (eta n) (From figure 6)
-efficiency.fin = .05;
+efficiency.fin = .95;
 
 % Overall surface efficiency for fin (eta o)
 efficiency.overall = 1 - (HXair.sigma .* (1 - efficiency.fin));
@@ -263,7 +263,7 @@ HX.A = double((HX.q * 1000) ./ (HX.U * temp.lm)); % m^2
 HX.Afg = air.massFlowRate ./ (HXair.sigma .* air.G);
 
 % Tube matrix length
-HX.LtmPreliminary = (.1:.03:1) + (HX.A ./ (HX.Afg .* HXair.alpha));
+HX.LtmPreliminary = (0:.03:1) + (HX.A ./ (HX.Afg .* HXair.alpha));
 
 % Number of tube passes (TURNS)
 HX.NtbPreliminary = HX.LtmPreliminary ./ HXwater.L;
@@ -383,8 +383,9 @@ verification.NTU = (verification.U .* HXair.alpha .* HX.V) / ...
 verification.CRatio = min(verificationAir.C, verificationWater.C) ./ ...
     max(verificationAir.C, verificationWater.C);
 
-% Effectiveness of HX (Figure 9)
-verification.epsilon = [98 99 87];
+% Efficiency
+verification.epsilon = (1 - exp(-verification.NTU * (1 + ...
+    verification.CRatio))) ./ (1 + verification.CRatio);
 
 %gas temp out
 verificationAir.outletTemp = (verification.epsilon * 10 ^ -2 .* ...
@@ -394,9 +395,6 @@ verificationAir.outletTemp = (verification.epsilon * 10 ^ -2 .* ...
 verificationWater.outletTemp = (verificationAir.C / ...
     verificationWater.C) * (air.inletTemp - verificationAir.outletTemp) ...
     + water.inletTemp;
-
-verification.epsilon = (1 - exp(-verification.NTU * (1 + ...
-    verification.CRatio))) ./ (1 + verification.CRatio);
 
 %% Plots
 % Creating new figure

@@ -290,7 +290,7 @@ HX.height = HX.numTubePassages .* HXwater.S; % m
 HX.width = HX.Afg ./ HX.height; % m
 
 % HX Total volume
-HX.V = HX.height .* HX.width * HX.Ltm;
+HX.V = HX.height .* HX.width .* HX.Ltm;
 
 % Water frontal area
 HX.Afro = (HX.Ltm ./ HX.numTubePasses) .* HX.height;
@@ -300,9 +300,12 @@ air.specificVol2 = (air.outletTemp / air.inletTemp) * (1 / air.density);
 air.meanSpecificVol = (air.specificVol2 + (1 / air.density)) / 2;
 air.meanTemp = (air.meanSpecificVol * air.inletTemp) / (1 / air.density);
 
-pressureDrop = ((air.G .^ 2) * (1 / air.density) / 2) * ...
+pressureDrop.air = ((air.G .^ 2) * (1 / air.density) / 2) * ...
     ((1 + HXair.sigma .^ 2) * ((air.specificVol2 / (1 / air.density)) -1)...
     + (air.f .* (HX.Ltm ./ HXair.rh) * (air.meanTemp / air.inletTemp))); % Pa
+
+pressureDrop.water = ((water.G .^ 2) .* (1 / water.density) .* water.f .* ...
+    HXwater.L) ./ (2 .* HXwater.rh); % kPa
 
 
 %% Design Verification
@@ -400,8 +403,12 @@ verificationWater.outletTemp = (verificationAir.C / ...
 % Creating new figure
 figure(1)
 
+pressureDrop.combinedForPlot = [pressureDrop.air', ...
+    (pressureDrop.water * 1000)'];
+
 % Creating bar graph
-bar(double(pressureDrop))
+bar(double(pressureDrop.combinedForPlot))
+hold on
 
 % Adding grid
 hold on
@@ -411,17 +418,13 @@ grid minor
 % Adding bar labels
 set(gca, 'xticklabel', HX.types, 'TickLabelInterpreter', 'Latex')
 
-% Adding values at tip of bar
-text(1:length(pressureDrop), pressureDrop, ...
-    num2str(double(pressureDrop')), 'vert', 'bottom', 'horiz', 'center',...
-    'Interpreter', 'Latex');
-
 % Plot descriptors
 xlabel('\emph {Heat Exchanger Type}','fontsize',14,'Interpreter',...
     'latex');
 ylabel('\emph {Pressure Drop (Pa)}','fontsize',14,'Interpreter','latex');
 title('\emph {Pressure Drop Across Different HX}','fontsize',16,...
     'Interpreter', 'latex')
+legend('Air', 'Water', 'location', 'northeast')
 
 % ----- Geometry of HX -----
 % Creating new Figure
@@ -432,7 +435,7 @@ rgbColors = {[0 204 0] / 255, [0 102 204] / 255, [255 0 0] / 255};
 
 % Plotting HX size for each type
 for ii = 1:3
-    plotcube([HX.width(ii) HX.height(ii) HX.Ltm(ii)], [0 0 0],...
+    plotcube([HX.width(ii) HX.Ltm(ii) HX.height(ii)], [0 0 0],...
         .7, rgbColors{ii})
     hold on
 end

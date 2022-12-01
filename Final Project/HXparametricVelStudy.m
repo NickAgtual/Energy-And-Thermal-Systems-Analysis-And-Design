@@ -293,7 +293,7 @@ HX.height = HX.numTubePassages .* HXwater.S; % m
 HX.width = HX.Afg ./ HX.height; % m
 
 % HX Total volume
-HX.V = HX.height .* HX.width * HX.Ltm;
+HX.V = HX.height .* HX.width .* HX.Ltm;
 
 % Water frontal area
 HX.Afro = (HX.Ltm ./ HX.numTubePasses) .* HX.height;
@@ -385,8 +385,9 @@ verification.NTU = (verification.U .* HXair.alpha .* HX.V) / ...
 verification.CRatio = min(verificationAir.C, verificationWater.C) ./ ...
     max(verificationAir.C, verificationWater.C);
 
-% Effectiveness of HX (Figure 9)
-verification.epsilon = [98 99 87];
+% Effectiveness
+verification.epsilon = (1 - exp(-verification.NTU * (1 + ...
+    verification.CRatio))) ./ (1 + verification.CRatio);
 
 %gas temp out
 verificationAir.outletTemp = (verification.epsilon * 10 ^ -2 .* ...
@@ -408,6 +409,9 @@ for ii = 1:length(HX.types)
     hold on
 end
 
+% Vertical line at selected water velocity
+xline(.5, 'k--', 'DisplayName', 'Selected Water Velocity')
+
 % Adding grid
 grid on
 grid minor
@@ -419,6 +423,5 @@ ylabel('\emph {Pressure Drop (Pa)}','fontsize',14,'Interpreter','latex');
 title('\emph {Pressure Drop Across Different HX for Varying Velocities}',...
     'fontsize',16, 'Interpreter', 'latex')
 legend('location', 'best', 'Interpreter', 'latex')
-
 
 

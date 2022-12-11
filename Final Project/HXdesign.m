@@ -167,11 +167,10 @@ air.density = interp1(air.propertyData(:, 1), ...
 air.k = interp1(air.propertyData(:, 1), ...
     air.propertyData(:, 6), air.bulkAvgTemp + 273.15); % m^2/s
 
-% Density of water
+% Prandtl number for air
 air.Pr = interp1(air.propertyData(:, 1), ...
     air.propertyData(:, 8), air.bulkAvgTemp + 273.15);
 
-% Prandtl number for air
 
 % ----- Water -----
 % Reading excel sheet with water properties
@@ -505,6 +504,7 @@ cellfun(@patch,XYZ{1},XYZ{2},XYZ{3},...
   repmat({alpha},6,1)...
   );
 
-view(3);
+view(3)
+axis equal;
 
 end
